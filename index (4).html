@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Merge Files: From Brute Force to Intuition</title>
+<style>
+:root{--bg:#f6f7f4;--ink:#1d2a2a;--mut:#56655f;--card:#fff;--line:#cfd8d2;--acc:#0b6e69;--hi:#fde68a;--new:#d1fae5;--sel:#dbeafe;--bad:#fee2e2;--best:#bbf7d0}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Segoe UI",system-ui,sans-serif;overflow-x:hidden}
+header{padding:28px 16px 12px;max-width:1200px;margin:auto}h1{margin:0;font:700 clamp(1.6rem,4vw,2.5rem)/1.15 Georgia,serif}
+.sub{color:var(--mut);margin:.3rem 0}
+nav{position:sticky;top:0;background:#fffe;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);z-index:5;padding:6px 16px}
+nav div{max-width:1200px;margin:auto;display:flex;gap:4px;overflow-x:auto}nav a{white-space:nowrap;padding:4px 10px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:.85rem}nav a:hover,nav a:focus-visible{background:var(--sel)}
+#prog{height:4px;background:var(--acc);width:0}
+main{max-width:1200px;margin:auto;padding:0 16px 60px}section{margin:34px 0;padding-top:8px}h2{font:700 1.5rem Georgia,serif;margin:.2rem 0 .5rem}
+p{max-width:75ch}.box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin:10px 0}
+button,select,input{font:inherit}button{background:var(--card);border:1.5px solid var(--acc);color:var(--acc);border-radius:8px;padding:6px 12px;cursor:pointer}
+button:hover:not(:disabled){background:var(--acc);color:#fff}button:disabled{opacity:.45;cursor:not-allowed}:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+.ctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}.cnt{margin-left:auto;color:var(--mut);font-size:.9rem}
+.lab{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,.9fr);gap:10px}.lab.nc{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+@media(max-width:900px){.lab,.lab.nc{grid-template-columns:minmax(0,1fr)}}
+pre.code{margin:0;background:#17242a;color:#e6edf0;border-radius:10px;padding:8px 0;overflow-x:auto;font:13px/1.55 Consolas,monospace;max-height:520px;overflow-y:auto}
+.ln{display:block;padding:0 10px 0 4px;white-space:pre;border-left:4px solid transparent}.ln.on{background:#7a5b05;border-left-color:#fbbf24;color:#fff}
+.k{color:#7dd3fc;font-style:normal}.n{color:#fda4af;font-style:normal}
+.vis,.side>div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0;overflow-x:auto}.side{display:grid;gap:10px;align-content:start}
+.vars{font:13px Consolas,monospace}.vars div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted var(--line)}.note{background:#f0f9f7!important;border-color:var(--acc)!important}
+ul.tree,ul.tree ul{list-style:none;margin:0;padding-left:16px;border-left:2px solid var(--line)}ul.tree{border:0;padding:0}li{margin:4px 0}
+.nd{display:block;text-align:left;font:12.5px Consolas,monospace;padding:3px 7px;border-radius:6px;border:1.5px solid #8aa;background:#fff;color:var(--ink);white-space:normal}
+.nd.run{border-style:dashed;background:var(--sel)}.nd.done{border-style:solid;background:#f1f5f3}.nd.best{background:var(--best);border-width:3px}.nd.cur{outline:3px solid #f59e0b}
+.files{display:flex;flex-wrap:wrap;gap:10px;min-height:76px;align-items:center}.card{min-width:64px;padding:8px 12px;border:2px solid #4b6;border-radius:10px;background:#fff;text-align:center;font-weight:700;font-size:1.2rem;transition:transform .3s}
+.card small{display:block;font-weight:400;font-size:.7rem;color:var(--mut)}.card.new{background:var(--new);border-style:double;border-width:4px}.card.sel{background:var(--sel);border-color:#1d4ed8;transform:translateY(-6px)}
+.tot{font-weight:700;color:var(--acc)}.msg{min-height:1.6em;color:#9a3412}
+.arr{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.cell{border:2px solid #789;border-radius:6px;min-width:42px;text-align:center;background:#fff}.cell small{display:block;font-size:.65rem;color:var(--mut)}.cell.h{background:var(--hi);border-style:dashed}.cell.r{border-width:4px}
+svg text{font:600 13px sans-serif}.opt{display:block;width:100%;text-align:left;margin:5px 0}.ok{background:var(--best)!important;color:var(--ink)!important}.no{background:var(--bad)!important;color:var(--ink)!important}
+table{border-collapse:collapse}td,th{border:1px solid var(--line);padding:4px 8px}abbr{text-decoration:underline dotted;cursor:help}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style></head><body>
+<div id="prog"></div>
+<nav aria-label="Sections"><div><a href="#s1">1 Problem</a><a href="#s2">2 Brute force</a><a href="#s3">3 Limit</a><a href="#s4">4 Greedy idea</a><a href="#s5">5 Why heap</a><a href="#s6">6 Heap lab</a><a href="#s7">7 Final code</a><a href="#s9">8 Complexity</a><a href="#s10">9 Quiz</a></div></nav>
+<header><h1>Merge Files: From Brute Force to Intuition</h1><p class="sub">Don't memorize the algorithm. Discover why it works.</p></header>
+<main>
+<section id="s1"><h2>1. Problem ko pehle samjhein</h2>
+<p>Given an array of file sizes, merge all files into one file with the minimum total computation cost. Merging files of sizes x and y costs x + y.</p>
+<div class="box"><b>Rules:</b> koi bhi do available files chuno → cost = unka sum → dono hat kar ek nayi file (size = sum) aa jaati hai → cost total mein add → jab tak ek file bachi na ho.</div>
+<h3>Animated example: [2, 3, 4]</h3><div id="ex"></div>
+<p>Yeh sirf <b>ek</b> merging sequence hai (cost 14). Abhi yeh proof nahi ki yeh sabse best hai.</p>
+<h3>Try it yourself</h3>
+<div class="box"><div id="tf" class="files" role="group" aria-label="Files"></div><p>Total cost: <span class="tot" id="tt">0</span> &nbsp; <span id="tc"></span></p><div class="ctl"><button id="tm">Merge selected</button><button id="tr">Reset</button></div><p class="msg" id="tmsg" aria-live="polite"></p></div></section>
+
+<section id="s2"><h2>2. Brute force khud discover karein</h2>
+<p><b>Ab sabse pehla thought kya aayega?</b> "Mujhe nahi pata ki sabse pehle kaunsi files merge karni chahiye. Toh saari possibilities try karke dekhte hain!" Neeche asli <abbr title="Function jo khud ko chhoti problem par dobara call karta hai">recursion</abbr> chal rahi hai — har node ek real function call hai.</p>
+<div class="ctl">Files (max 4): <input id="bin" value="2,3,4" size="12" aria-label="Brute force input"><button id="bgo">Load</button> Show levels: <select id="blv" aria-label="Levels"><option value="0">1</option><option value="1">2</option><option value="9" selected>All</option></select></div>
+<div id="brute"></div>
+<div class="box"><b>Code ko samjhein:</b> base case 0 isliye return karta hai kyunki ek file bachi toh aur merge ki zaroorat nahi. <code>j = i + 1</code> isliye ki pair (2,3) aur (3,2) same hai. Naya collection isliye banta hai ki original files safe rahein aur har branch alag explore ho. Merge hui do files exclude hoti hain aur unka sum insert hota hai. Recursive result mein mergeCost add karte hain kyunki total = abhi ki cost + baaki ki cost. <code>minCost</code> sab pairs dekhne ke baad hi sahi hota hai.<br>Pairs ki ginti: <b>n(n−1)/2</b>. Har merge ke baad n ek kam hota hai, par har state phir se saare pairs try karti hai — isliye sequences tezi se badhte hain.</div></section>
+
+<section id="s3"><h2>3. Brute force ki limit</h2>
+<p>Ab agar sirf 3 files ke liye itni possibilities hain, toh 100 files ke liye kya hoga?</p>
+<div class="ctl" id="sz"></div><div class="ctl">Execution limit (calls): <input id="lim" type="number" value="200000" min="1000" max="2000000" aria-label="Call limit"></div>
+<div class="box" id="sres">Size chuno.</div>
+<p>Har decision ke baad humein phir se multiple decisions explore karne padte hain. Isliye brute force large inputs ke liye practical nahi hai. (Memoization alone is fundamental growth ko nahi hatati — states bahut zyada hain.)</p></section>
+
+<section id="s4"><h2>4. Greedy idea — reasoning se</h2>
+<p>Ek cheez observe karein: jo file hum merge karte hain, woh aage bhi kisi aur file ke saath merge hoti hai. Toh ek file ka size future merges ki cost ko bhi affect karta hai. Files [1, 2, 10, 20] par do strategies dekhein:</p>
+<h3>Strategy A: badi files pehle</h3><div id="stA"></div><h3>Strategy B: chhoti files pehle</h3><div id="stB"></div>
+<p>66 vs 49: ek badi file jaldi merge hui toh woh <b>baar baar</b> cost mein judti rahi. Toh idea: <b>har baar do sabse chhoti available files merge karein?</b></p>
+<div class="ctl"><button id="g1">Try merging the smallest two</button><button id="g2">Try merging the largest two</button><button id="g3">Explore another pair</button></div><div class="box" id="gres" aria-live="polite">Ek button dabayein.</div>
+<div class="box"><b>Sirf examples proof nahi hote.</b> Proof (exchange argument) ka intuition:<br>
+Kisi bhi merge tree mein file ki cost = <b>size × depth</b> (kitni baar woh merges mein shamil hui). Har tree mein sabse deep level par do siblings hote hain. Maan lo optimal tree mein wahan badi files a, b hain aur chhoti files x, y upar hain. x ↔ a swap karo: change = (x−a)(d<sub>a</sub>−d<sub>x</sub>) ≤ 0, kyunki x ≤ a aur a zyada deep hai. Matlab cost badhi nahi. Y ↔ b ke liye bhi wahi. Toh ek optimal tree hai jisme do smallest files deepest siblings hain — yaani unhe pehle merge karna safe hai. Merge ke baad same structure ki problem bachti hai, n−1 files ke saath, aur argument dobara lagta hai (induction).
+<svg id="pf" viewBox="0 0 560 175" width="100%" role="img" aria-label="Exchange argument: before and after swapping small files deeper"></svg></div></section>
+
+<section id="s5"><h2>5. Heap kyun?</h2>
+<p>Har merge ke baad ek nayi file add hoti hai, toh do smallest files phir se dhoondhni padengi.</p>
+<table><tr><th>Method</th><th>Har round ka kaam</th></tr><tr><td>A: poora collection dobara sort</td><td>~ n log n, jabki humein sirf do smallest chahiye</td></tr><tr><td>B: <abbr title="Aisa tree jisme parent hamesha apne bachhon se chhota hota hai">Min Heap</abbr></td><td>smallest turant root par; remove aur insert har ek ~ log n</td></tr></table></section>
+
+<section id="s6"><h2>6. Min Heap lab</h2>
+<div class="ctl">Files (max 8): <input id="hin" value="1,2,10,20" size="14" aria-label="Heap input"><button id="hgo">Load</button></div><div id="heap"></div>
+<p>Array sorted nahi hota — sirf parent ≤ children rehta hai. Index i ke bachhe 2i+1 aur 2i+2 hote hain.</p></section>
+
+<section id="s7"><h2>7. Final C++ code</h2><p>Upar wali heap animation mein har line highlight hoti hai. Line-by-line explanation animation ke note panel mein aati hai (<code>top()</code> sirf smallest dekhta hai; <code>pop()</code> use hata deta hai). Default C++ <code>priority_queue</code> largest deta hai; <code>greater&lt;int&gt;</code> use min-priority queue banata hai. Saari files pehle insert hoti hain taaki heap poora ready ho. Loop tab tak chalta hai jab tak 1 se zyada file hai, kyunki merge ke liye do chahiye. Merged size wapas insert hota hai kyunki woh ab ek nayi available file hai.</p></section>
+
+<section id="s9"><h2>8. Complexity</h2><div class="box"><b>Brute force:</b> har state saare pairs try karti hai, aur har step par n ek kam hota hai — total calls lagbhag n!(n−1)!/2<sup>n−1</sup> jaise tezi se badhte hain (section 3 mein asli counts dekhein). Koi simple polynomial nahi.<br><b>Min Heap:</b> n−1 merges; har merge mein 2 extractions + 1 insertion, har ek O(log n) → <b>O(n log n)</b>. Initial build O(n) (heapify) ya O(n log n) (repeated insert). Auxiliary space O(n) heap ke liye (input/output alag).</div></section>
+
+<section id="s10"><h2>9. Test your understanding</h2><div id="quiz"></div>
+<div class="box"><h3>Final challenge: [4, 3, 2, 6]</h3><p>Pehla merge kaunsa hoga? Predict karein:</p><div id="ch" class="ctl"></div><p id="chm" aria-live="polite"></p></div></section>
+</main>
+<script>
+const $=(s,r=document)=>r.querySelector(s),esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const hl=s=>esc(s).replace(/\b(class|public|int|for|if|return|while|vector|priority_queue|greater|INT_MAX)\b/g,'<b class="k">$1</b>').replace(/\b(\d+)\b/g,'<i class="n">$1</i>');
+const parse=(s,m)=>s.split(/[\s,]+/).map(Number).filter(x=>Number.isInteger(x)&&x>0).slice(0,m);
+function Lab(root,cfg){
+ let T=cfg.trace(),i=0,tm=null,self={sel:null};
+ root.innerHTML=`<div class="ctl"><button data-a="p">◀ Prev</button><button data-a="n">Next ▶</button><button data-a="pl">▶ Play</button><button data-a="r">↺ Restart</button><label>Speed <select data-a="sp"><option value="1400">Slow</option><option value="800" selected>Normal</option><option value="300">Fast</option></select></label>${(cfg.extra||[]).map((e,k)=>`<button data-x="${k}">${e[0]}</button>`).join('')}<span class="cnt"></span></div><div class="lab ${cfg.code?'':'nc'}">${cfg.code?'<pre class="code"></pre>':''}<div class="vis"></div><div class="side"><div class="vars"></div><div class="note"></div></div></div>`;
+ const stop=()=>{clearInterval(tm);tm=null;$('[data-a=pl]',root).textContent='▶ Play'};
+ function draw(){const s=T[i];
+  if(cfg.code)$('pre',root).innerHTML=cfg.code.map((l,k)=>`<span class="ln${k===s.line?' on':''}">${k===s.line?'▶':' '} ${hl(l)}</span>`).join('');
+  $('.vis',root).innerHTML=cfg.render(s,self);
+  $('.vars',root).innerHTML=s.vars?Object.entries(s.vars).map(([k,v])=>`<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join(''):'';$('.vars',root).style.display=s.vars?'':'none';
+  $('.note',root).innerHTML=esc(s.note)+(cfg.expl&&cfg.expl[s.line]?`<br><i>Is line ka kaam:</i> ${esc(cfg.expl[s.line])}`:'')+(cfg.side?cfg.side(s,self):'');
+  $('.cnt',root).textContent=`Step ${i+1} / ${T.length}`;
+  $('[data-a=p]',root).disabled=i===0;$('[data-a=n]',root).disabled=i===T.length-1;if(i===T.length-1)stop()}
+ root.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.x){i=cfg.extra[b.dataset.x][1](T,i);draw();return}
+  const a=b.dataset.a;if(a==='p'&&i>0)i--;if(a==='n'&&i<T.length-1)i++;if(a==='r'){stop();i=0;self.sel=null}
+  if(a==='pl'){if(tm)stop();else{if(i===T.length-1)i=0;b.textContent='⏸ Pause';tm=setInterval(()=>{if(i<T.length-1){i++;draw()}else stop()},+$('[data-a=sp]',root).value)}}
+  if(b.classList.contains('nd')){self.sel=+b.dataset.id}
+  draw()});
+ $('[data-a=sp]',root).addEventListener('change',()=>{if(tm){stop();$('[data-a=pl]',root).click()}});
+ self.draw=draw;self.reload=()=>{stop();T=cfg.trace();i=0;self.sel=null;draw()};draw();return self}
+/* ---------- file strategy traces ---------- */
+const two=(a,asc)=>{const x=a.map((_,k)=>k).sort((p,q)=>asc?a[p]-a[q]:a[q]-a[p]);return[x[0],x[1]]};
+function fileTrace(f,pick){let a=f.slice(),tot=0,cs=[];const T=[{files:a.slice(),tot,cs:[],note:`Shuruaat: [${a}]. Total = 0.`}];
+ while(a.length>1){const[p,q]=pick(a),x=a[p],y=a[q],c=x+y;a=a.filter((_,k)=>k!==p&&k!==q);a.push(c);tot+=c;cs.push(c);T.push({files:a.slice(),pair:[x,y],c,tot,cs:cs.slice(),note:`Merge ${x} + ${y} = ${c}. Total = ${cs.join(' + ')} = ${tot}.`})}
+ T[T.length-1].note+=` Ek file bachi → ruk jao. Answer = ${tot}.`;return T}
+const cards=(s)=>`<div class="files">${s.files.map((v,k)=>`<div class="card ${s.pair&&k===s.files.length-1?'new':''}">${v}<small>${s.pair&&k===s.files.length-1?'★ new':'File'}</small></div>`).join('')}</div><p>${s.pair?`Merge cost = ${s.pair[0]} + ${s.pair[1]} = ${s.c}`:'Abhi koi merge nahi hua'}<br>Total cost = <span class="tot">${s.tot}</span></p>`;
+const fileCfg=(f,p)=>({trace:()=>fileTrace(f,p),render:cards});
+Lab($('#ex'),fileCfg([2,3,4],()=>[0,1]));Lab($('#stA'),fileCfg([1,2,10,20],a=>two(a,false)));Lab($('#stB'),fileCfg([1,2,10,20],a=>two(a,true)));
+/* ---------- try it yourself ---------- */
+(()=>{let a,sel,tot,cs;const L=['A','B','C','D'];
+ const reset=()=>{a=[2,3,4];sel=[];tot=0;cs=[];$('#tmsg').textContent='Do files click karke select karein.';rd()};
+ function rd(){$('#tf').innerHTML=a.map((v,k)=>`<button class="card ${sel.includes(k)?'sel':''}" data-k="${k}" aria-pressed="${sel.includes(k)}">${v}<small>${sel.includes(k)?'✓ selected':'File '+(L[k]||'')}</small></button>`).join('');
+  $('#tt').textContent=tot;$('#tc').textContent=cs.length?cs.join(' + ')+' = '+tot:'';$('#tm').disabled=sel.length!==2}
+ $('#tf').onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=+b.dataset.k;
+  if(sel.includes(k))sel=sel.filter(x=>x!==k);else if(sel.length===2){$('#tmsg').textContent='Pehle se 2 files select hain. Ek ko unselect karke dusri chuno.';return}else sel.push(k);
+  $('#tmsg').textContent=sel.length===2?'Ab "Merge selected" dabayein.':'Merge ke liye do files chahiye — ek aur chuno.';rd()};
+ $('#tm').onclick=()=>{const[p,q]=sel,c=a[p]+a[q];a=a.filter((_,k)=>k!==p&&k!==q);a.push(c);tot+=c;cs.push(c);sel=[];
+  $('#tmsg').textContent=a.length===1?`Done! Total = ${tot}. Kya isse kam possible hai? Agle section mein dekhte hain.`:`Merged, new file ${c}. Total = ${tot}.`;rd()};
+ $('#tr').onclick=reset;reset()})();
+/* ---------- brute force ---------- */
+const BC=["class Solution {","public:","    int minComputation(vector<int>& files) {","        if (files.size() <= 1)","            return 0;","        int n = files.size();","        int minCost = INT_MAX;","        for (int i = 0; i < n; i++) {","            for (int j = i + 1; j < n; j++) {","                int mergeCost = files[i] + files[j];","                vector<int> remainingFiles;","                for (int k = 0; k < n; k++) {","                    if (k != i && k != j) {","                        remainingFiles.push_back(files[k]);","                    }","                }","                remainingFiles.push_back(mergeCost);","                int remainingCost = minComputation(remainingFiles);","                int totalCost = mergeCost + remainingCost;","                minCost = min(minCost, totalCost);","            }","        }","        return minCost;","    }","};"];
+const BE={3:"Har call yahin se shuru: dekho kitni files bachi hain.",4:"Ek file bachi → merge karne ko kuch nahi, cost 0.",6:"minCost ko bahut bada rakhte hain taaki koi bhi real cost isse chhoti ho.",9:"Pair (i,j) ki immediate cost = dono sizes ka sum.",16:"Naya collection: i, j hata kar baaki files copy, phir merged file insert.",17:"Recursion: ab chhoti problem (ek file kam) ka best cost poochte hain.",18:"Total = abhi ki cost + baaki ki best cost.",19:"Is pair ka total pichhle best se chhota ho toh minCost update.",22:"Saare pairs dekh liye → minimum return."};
+function bruteTrace(f0){const T=[],N=[];let id=0;
+ const sn=(line,cur,vars,note)=>T.push({line,cur,vars,note,nodes:N.map(n=>({...n})),dec:line===9,fin:line===18});
+ function rec(f,p,pair,cost,d){const me=id++;N.push({id:me,p,f:f.slice(),pair,cost,res:null,st:'run',d});const n=f.length;
+  sn(3,me,{'files':'['+f+']','files.size()':n},`Naya call, files=[${f}].`);
+  if(n<=1){N[me].res=0;N[me].st='done';sn(4,me,{files:'['+f+']',return:0},'Base case hit: return 0.');return 0}
+  sn(6,me,{n,minCost:'INT_MAX'},'minCost reset.');let min=Infinity;const kids=[];
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const mc=f[i]+f[j],V={i,j,'files[i]':f[i],'files[j]':f[j],mergeCost:mc,minCost:min===Infinity?'INT_MAX':min};
+   sn(9,me,V,`Pair choose: ${f[i]} aur ${f[j]} → mergeCost ${mc}. (Decision point)`);
+   const rem=f.filter((_,k)=>k!==i&&k!==j);rem.push(mc);V.remainingFiles='['+rem+']';sn(16,me,V,`Baaki files + merged ${mc} = [${rem}].`);
+   const cid=id;sn(17,me,V,`Recursive call [${rem}] par.`);const r=rec(rem,me,[f[i],f[j]],mc,d+1);
+   const tot=mc+r;V.remainingCost=r;V.totalCost=tot;sn(18,me,V,`Branch complete: ${mc} + ${r} = ${tot}.`);
+   kids.push([cid,tot]);min=Math.min(min,tot);V.minCost=min;sn(19,me,V,`minCost = ${min}.`)}
+  N[me].res=min;N[me].st='done';const b=kids.find(k=>k[1]===min);if(b)N[b[0]].best=true;sn(22,me,{minCost:min,return:min},`Sab pairs ho gaye → return ${min}.`);return min}
+ rec(f0,-1,null,0,0);return T}
+let bf=[2,3,4];
+const brute=Lab($('#brute'),{code:BC,expl:BE,trace:()=>bruteTrace(bf),
+ extra:[['Next decision',(T,i)=>{const k=T.findIndex((s,x)=>x>i&&s.dec);return k<0?i:k}],['Next completed branch',(T,i)=>{const k=T.findIndex((s,x)=>x>i&&s.fin);return k<0?i:k}]],
+ render(s,self){const mx=+$('#blv').value,ch={};s.nodes.forEach(n=>(ch[n.p]=ch[n.p]||[]).push(n));
+  const rr=p=>(ch[p]||[]).filter(n=>n.d<=mx).map(n=>{const k=rr(n.id);return`<li><button class="nd ${n.st} ${n.best?'best':''} ${n.id===s.cur?'cur':''}" data-id="${n.id}">[${n.f}]${n.pair?` ⟵ ${n.pair[0]}+${n.pair[1]}=${n.cost}`:''}${n.res!==null?` → ${n.res}`:' … exploring'}${n.best?' ★best':''}${n.id===s.cur?' ◀ now':''}</button>${k?`<ul>${k}</ul>`:''}</li>`}).join('');
+  return`<ul class="tree">${rr(-1)}</ul><p><small>Dashed = abhi explore ho raha, solid = complete, ★ = best branch, ◀ = current call</small></p>`},
+ side(s,self){if(self.sel===null)return'';const n=s.nodes[self.sel];return n?`<hr>Selected: [${n.f}]${n.res!==null?`; is decision ka total = ${n.cost}+${n.res} = ${n.cost+n.res}`:'; abhi explore ho raha'}`:''}});
+$('#blv').onchange=()=>brute.draw();$('#bgo').onclick=()=>{const v=parse($('#bin').value,4);if(v.length<2){alert('Kam se kam 2 positive integers do.');return}bf=v;brute.reload()};
+/* ---------- scaling ---------- */
+function cnt(f,st,d){st.calls++;st.depth=Math.max(st.depth,d);if(st.calls>st.limit){st.abort=1;return 0}
+ if(f.length<=1){st.leaves++;return 0}let m=Infinity;
+ for(let i=0;i<f.length;i++)for(let j=i+1;j<f.length;j++){st.cand++;const r=f.filter((_,k)=>k!==i&&k!==j);r.push(f[i]+f[j]);const v=f[i]+f[j]+cnt(r,st,d+1);if(st.abort)return 0;m=Math.min(m,v)}return m}
+[3,4,5,6,8].forEach(n=>{const b=document.createElement('button');b.textContent=n+' files';b.onclick=()=>{const f=Array.from({length:n},(_,i)=>(i*7+3)%11+1),st={calls:0,cand:0,depth:0,leaves:0,abort:0,limit:+$('#lim').value||200000},r=cnt(f,st,0);
+ let t=1,c=1;for(let k=n;k>1;k--){t*=k*(k-1)/2;c+=t}
+ $('#sres').innerHTML=`Files: [${f}]<br>Recursive calls: <b>${st.calls.toLocaleString()}</b> · Candidate merges: <b>${st.cand.toLocaleString()}</b> · Max depth: <b>${st.depth}</b> · Completed branches: <b>${st.leaves.toLocaleString()}</b><br>`+(st.abort?`<b>Limit (${st.limit.toLocaleString()} calls) hit</b> — browser freeze se bachne ke liye run roka gaya. Poori run mein ${c.toLocaleString()} calls lagte. Chhota example try karein.`:`Minimum cost = <b>${r}</b>. (Poora tree: ${c.toLocaleString()} calls.)`)};$('#sz').appendChild(b)});
+/* ---------- greedy decision ---------- */
+(()=>{const base=[1,2,10,20];const best=(f)=>{const s={calls:0,cand:0,depth:0,leaves:0,limit:1e7};return cnt(f,s,0)};let alt=0;const pairs=[[1,2],[0,3],[0,2],[1,3]];
+ function tryPair(i,j,label){const a=base.slice(),c=a[i]+a[j],r=a.filter((_,k)=>k!==i&&k!==j);r.push(c);const rest=fileTrace(r,x=>two(x,true)).pop().tot,tot=c+rest,b=best(base);
+  $('#gres').innerHTML=`${label}: ${base[i]} + ${base[j]} = ${c}. Iske baad baaki smallest-first karein toh total = <b>${tot}</b>. Saari possibilities mein best = <b>${b}</b>.<br>`+(tot>b?'Is choice se best nahi mila — behtar pehla merge maujood hai.':'Yeh best ke barabar hai. Par ek example proof nahi — upar wala exchange argument yeh sabhi inputs ke liye guarantee deta hai.')}
+ $('#g1').onclick=()=>tryPair(0,1,'Smallest two');$('#g2').onclick=()=>tryPair(2,3,'Largest two');$('#g3').onclick=()=>{const p=pairs[alt++%pairs.length];tryPair(p[0],p[1],'Another pair')};
+ const node=(x,y,t)=>`<circle cx="${x}" cy="${y}" r="13" fill="#fff" stroke="#0b6e69" stroke-width="2"/><text x="${x}" y="${y+4}" text-anchor="middle">${t}</text>`;
+ const tr=(o,L)=>{const E=[[70,22,30,62],[70,22,110,62],[110,62,80,107],[110,62,140,107],[140,107,115,152],[140,107,165,152]];const P=[[70,22],[30,62],[110,62],[80,107],[140,107],[115,152],[165,152]];
+  return E.map(e=>`<line x1="${o+e[0]}" y1="${e[1]}" x2="${o+e[2]}" y2="${e[3]}" stroke="#789" stroke-width="2"/>`).join('')+P.map((p,k)=>node(o+p[0],p[1],L[k])).join('')};
+ $('#pf').innerHTML=tr(0,['·','x','·','y','·','a','b'])+tr(280,['·','a','·','b','·','x','y'])+'<text x="190" y="90" text-anchor="middle">swap ⇒</text><text x="10" y="172">Pehle: chhoti files upar</text><text x="290" y="172">Baad: chhoti files deepest, cost ≤</text>'})();
+/* ---------- heap ---------- */
+const HC=["class Solution {","public:","    int minComputation(vector<int>& files) {","        priority_queue<int, vector<int>, greater<int>> pq;","        for (int file : files) {","            pq.push(file);","        }","        int totalCost = 0;","        while (pq.size() > 1) {","            int x = pq.top();","            pq.pop();","            int y = pq.top();","            pq.pop();","            int merged = x + y;","            totalCost += merged;","            pq.push(merged);","        }","        return totalCost;","    }","};"];
+const HE={3:"greater<int> se min-priority queue: sabse chhota top par.",5:"push: end mein daalo, phir parent se compare karke upar bubble.",7:"Abhi tak koi merge cost nahi.",8:"Merge ke liye kam se kam do files chahiye.",9:"top() sirf dekhta hai, hataata nahi.",10:"pop() root hataata hai aur heap ko theek karta hai.",13:"Do smallest files ka sum.",14:"Merge cost total mein jodte hain.",15:"Nayi file wapas heap mein, kyunki aage merge hogi.",17:"Ek file bachi → accumulated cost return."};
+function heapTrace(files){const T=[],a=[];let tot=0,hand=[],V={};
+ const sn=(line,hi,note)=>T.push({line,a:a.slice(),hi:hi||{},note,hand:hand.slice(),vars:{...V,totalCost:tot,'pq.size()':a.length}});
+ function push(v,line){a.push(v);let k=a.length-1;sn(line,{ins:k},`${v} ko end (index ${k}) par daala.`);
+  while(k>0){const p=(k-1)>>1,sw=a[k]<a[p];sn(line,{cmp:[k,p]},`Compare child ${a[k]} vs parent ${a[p]}: `+(sw?'child chhota → swap.':'parent chhota/barabar → heap sahi, ruk gaye.'));
+   if(!sw)break;[a[k],a[p]]=[a[p],a[k]];sn(line,{swap:[k,p]},`Swap hua: ${a[p]} ab index ${p} par.`);k=p}}
+ function pop(line){const top=a[0],last=a.pop();if(!a.length){sn(line,{},`${top} hata diya, heap khaali.`);return top}
+  a[0]=last;sn(line,{root:0},`Root ${top} nikala. Last element ${last} root par rakha, ab neeche sink karega.`);let k=0;
+  for(;;){const l=2*k+1,r=l+1;let m=k;if(l<a.length&&a[l]<a[m])m=l;if(r<a.length&&a[r]<a[m])m=r;
+   sn(line,{cmp:[k,l,r].filter(x=>x<a.length)},`Index ${k} (${a[k]}) ko bachhon se compare: `+(m===k?'koi bachha chhota nahi → ruk gaye.':`${a[m]} chhota hai → swap.`));
+   if(m===k)break;[a[k],a[m]]=[a[m],a[k]];sn(line,{swap:[k,m]},`Swap: ${a[k]} upar aaya.`);k=m}return top}
+ sn(3,{},'Khaali min-priority queue.');files.forEach(v=>{sn(4,{},`Loop: file ${v}.`);push(v,5)});tot=0;sn(7,{root:0},'totalCost = 0. Root = sabse chhoti file.');
+ while(a.length>1){sn(8,{root:0},`pq.size() = ${a.length} > 1 → merge karo.`);const x=a[0];V={x};sn(9,{root:0},`top() = ${x} (abhi hataya nahi).`);pop(10);hand=[x];sn(10,{},`x = ${x} extract ho gaya.`);
+  const y=a[0];V={x,y};sn(11,{root:0},`Naya top() = ${y}.`);pop(12);hand=[x,y];sn(12,{},`y = ${y} extract ho gaya.`);
+  const m=x+y;V={x,y,merged:m};sn(13,{},`merged = ${x} + ${y} = ${m}.`);tot+=m;sn(14,{},`totalCost += ${m} → ${tot}.`);hand=[];push(m,15)}
+ V={};sn(8,{root:0},'pq.size() = 1 → loop khatam.');sn(17,{root:0},`Return ${tot}.`);return T}
+function heapSVG(s){const n=s.a.length,W=480,lv=Math.max(1,Math.floor(Math.log2(n))+1),H=lv*52+20,pos=i=>{const d=Math.floor(Math.log2(i+1)),k=i+1-(1<<d);return[(k+.5)/(1<<d)*W,28+d*52]};
+ const hi=s.hi,mark=i=>(hi.cmp&&hi.cmp.includes(i))||(hi.swap&&hi.swap.includes(i));let o=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Heap tree">`;
+ for(let i=1;i<n;i++){const a=pos(i),b=pos((i-1)>>1);o+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#789" stroke-width="2"/>`}
+ for(let i=0;i<n;i++){const p=pos(i);o+=`<circle cx="${p[0]}" cy="${p[1]}" r="18" fill="${mark(i)?'#fde68a':'#fff'}" stroke="${i===0?'#0b6e69':'#456'}" stroke-width="${i===0?5:2}" ${hi.ins===i?'stroke-dasharray="4 3"':''}/><text x="${p[0]}" y="${p[1]+5}" text-anchor="middle">${s.a[i]}</text>${i===0?`<text x="${p[0]+24}" y="${p[1]-14}" font-size="11">min</text>`:''}${hi.ins===i?`<text x="${p[0]+22}" y="${p[1]+22}" font-size="11">new</text>`:''}`}
+ return o+'</svg>'}
+let hf=[1,2,10,20];
+const heap=Lab($('#heap'),{code:HC,expl:HE,trace:()=>heapTrace(hf),
+ render:s=>heapSVG(s)+`<div class="arr" aria-label="Heap array">${s.a.map((v,i)=>`<div class="cell ${s.hi.cmp&&s.hi.cmp.includes(i)||s.hi.swap&&s.hi.swap.includes(i)||s.hi.ins===i?'h':''} ${i===0?'r':''}">${v}<small>[${i}]</small></div>`).join('')}</div><p>Extracted (haath mein): <b>${s.hand.length?s.hand.join(', '):'—'}</b></p><p><small>Mota border = root (min) · peela dashed = compare/swap/new</small></p>`});
+$('#hgo').onclick=()=>{const v=parse($('#hin').value,8);if(v.length<2){alert('Kam se kam 2 positive integers do.');return}hf=v;heap.reload()};
+/* ---------- quiz ---------- */
+const Q=[["Brute force slow kyun hota hai?",["Har state saare pairs try karti hai, aur possibilities tezi se badhti hain","Kyunki C++ slow hai","Kyunki files sorted nahi hoti"],0,"Har merge ke baad dobara saare pairs ke decisions khulte hain, isliye sequences ki ginti bahut tezi se badhti hai."],
+["Ek merge future costs ko kyun affect karta hai?",["Merged file aage bhi merges mein shamil hoti hai, toh uska size baar baar jodta hai","Kyunki total cost sirf last merge hai","Affect nahi karta"],0,"Merged file ek nayi file hai jo aage phir merge hogi — uska size har aage ke merge mein add hota hai."],
+["Do smallest files kyun merge karte hain?",["Kyunki sabse chhoti cost abhi aati hai, bas","Exchange argument: smallest files deepest siblings ban sakti hain bina cost badhaye","Kyunki heap aisa kehta hai"],1,"Sirf current cost nahi — swap karne par cost kabhi badhti nahi, isliye smallest pair pehle merge karna safe hai."],
+["Min Heap yahan useful kyun hai?",["Poora array sorted rakhta hai","Smallest turant deta hai, aur remove/insert O(log n) mein","Duplicate hata deta hai"],1,"Humein baar baar sirf smallest chahiye; poora re-sort zaroorat se zyada kaam hai."],
+["Merged size ko heap mein wapas kyun daalte hain?",["Kyunki woh ab ek nayi available file hai jo aage merge ho sakti hai","Total cost store karne ke liye","Heap khaali na ho isliye"],0,"Merge ke baad do files ki jagah ek nayi file aati hai; usse aage merge karna hai."],
+["Ek file bachne par kyun rukte hain?",["Merge ke liye do files chahiye; ek file ko kisi se merge nahi kar sakte","Heap full ho jaata hai","Cost zero ho jaati hai"],0,"Sab files ek ho chuki hain — kaam poora."]];
+$('#quiz').innerHTML=Q.map((q,n)=>`<div class="box"><b>Q${n+1}. ${q[0]}</b>${q[1].map((o,k)=>`<button class="opt" data-q="${n}" data-k="${k}">${o}</button>`).join('')}<p id="qf${n}" aria-live="polite"></p></div>`).join('');
+$('#quiz').onclick=e=>{const b=e.target.closest('.opt');if(!b)return;const n=+b.dataset.q,k=+b.dataset.k,q=Q[n],f=$('#qf'+n);const ok=k===q[2];b.classList.remove('ok','no');b.classList.add(ok?'ok':'no');
+ f.textContent=ok?'✓ Sahi! '+q[3]:'✗ Abhi nahi — koi baat nahi. Ek aur option socho. Hint: '+q[3].split('—')[0].slice(0,60)+'…';if(ok)document.querySelectorAll(`[data-q="${n}"]`).forEach(x=>x.disabled=true)};
+const CF=[4,3,2,6];[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]].forEach(p=>{const b=document.createElement('button');b.textContent=`${CF[p[0]]} + ${CF[p[1]]}`;b.onclick=()=>{const ok=[CF[p[0]],CF[p[1]]].sort().join()==='2,3';
+ $('#chm').innerHTML=(ok?'✓ Sahi, do smallest 2 aur 3 hain.':'Abhi nahi: dekho do smallest kaunsi hain.')+' Animation load ho gayi (answer 29: 5 + 9 + 15) — heap lab mein dekhein.';$('#hin').value='4,3,2,6';$('#hgo').click();$('#heap').scrollIntoView()};$('#ch').appendChild(b)});
+addEventListener('scroll',()=>{$('#prog').style.width=100*scrollY/(document.documentElement.scrollHeight-innerHeight)+'%'},{passive:true});
+</script></body></html>
